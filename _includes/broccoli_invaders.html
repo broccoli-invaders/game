@@ -37,11 +37,11 @@
     .header {
       color: rgb(196, 250, 214);
       font-size: x-large;
+      font-weight: bold;
       display: flex;
       justify-content: center;
       padding-top: 10px;
       margin: 0;
-      border: 0;
     }
 
     .panel {
@@ -83,9 +83,9 @@
 </head>
 
 <body>
-  <h1 class="header">
+  <div class="header">
     Broccoli Invaders
-  </h1>
+  </div>
   <div class="game">
     <canvas id="board" width="1000px" height="700px"></canvas>
     <button id="start_game" onclick="startGame()">S T A R T</button>
