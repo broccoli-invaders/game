@@ -1,1 +1,421 @@
-Test
+
+<html lang="en">
+
+<head>
+  <meta chareset="utf-8" />
+  <meta name="author" content="Daria from OKI">
+  <meta name="description" content="Broccoli Invaders">
+  <title>Broccoli Invaders</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background-color: rgb(0, 0, 0);
+    }
+
+    #board {
+      background-image: url("img/space2.png");
+      background-size: cover;
+      background-color: rgb(0, 0, 0);
+      background-position-y: 0;
+      border: 4px solid darkseagreen;
+      margin: 20px;
+      border-radius: 10px;
+    }
+
+    .opis {
+      color: darkseagreen;
+      font-weight: bold;
+      font-size: large;
+    }
+
+    .instrukcja {
+      color: darkseagreen;
+      font-weight: bold;
+      font-size: medium;
+    }
+
+    .header {
+      color: rgb(196, 250, 214);
+      font-size: x-large;
+      font-weight: bold;
+      display: flex;
+      justify-content: center;
+      padding-top: 10px;
+      margin: 0;
+    }
+
+    .panel {
+      border: 4px solid darkseagreen;
+      display: flex;
+      justify-content: center;
+      border-radius: 10px;
+      padding: 10px;
+      width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    #start_game {
+      background-color: darkseagreen;
+      border: 2px solid yellowgreen;
+      width: 200px;
+      height: 30px;
+      font-weight: bold;
+      color: white;
+      border-radius: 4px;
+      position: absolute;
+      margin-top: 650px;
+    }
+
+    .game {
+      display: flex;
+      justify-content: center;
+    }
+
+    .wynik {
+      color: rgb(196, 250, 214);
+      font-size: x-large;
+      font-weight: bold;
+      padding-left: 50px;
+      padding-right: 50px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    Broccoli Invaders
+  </div>
+  <div class="game">
+    <canvas id="board" width="1000px" height="700px"></canvas>
+    <button id="start_game" onclick="startGame()">S T A R T</button>
+  </div>
+  <div class="panel">
+    <span id="level" class="wynik"></span>
+    <span id="score" class="wynik"></span>
+    <span id="health" class="wynik"></span>
+  </div>
+
+  <script type="text/javascript">
+    const level_max = 9;
+    const levels = {};
+    for (let i = 1; i < level_max; i++) {
+      levels[i] = {
+        next_level: 10 * i,
+        monster_speed: 0.3 * i,
+      };
+    }
+    levels[level_max] = {
+      next_level: 1000,
+      monster_speed: 0.3 * 10,
+    };
+    const level_up_sound = new Audio("sounds/curve.wav");
+    const level_up_img = loadImage("level_up.png");
+    let level_up_time = 0;
+
+    const ship_version_max = 3;
+    const ship_img = {};
+    for (let i = 0; i < level_max; i++) {
+      const version = Math.floor(i / ship_version_max) + 1;
+      ship_img[i + 1] = {
+        up: loadImage(`statek_v${version}.png`),
+        left: loadImage(`statek_v${version}_left.png`),
+        right: loadImage(`statek_v${version}_right.png`),
+      };
+    }
+
+    const monster_img = {};
+    const monster_version_max = 3;
+    const monster_step_max = 4;
+    for (let version = 1; version <= monster_version_max; version++) {
+      monster_img[version] = [];
+      for (let i = 1; i <= monster_step_max; i++) {
+        monster_img[version].push(loadImage(`brokul_${version}_${i - 1}.png`));
+      }
+    }
+
+    const board = document.getElementById("board");
+    const canvas = board.getContext("2d");
+
+    let score;
+    let score_diff;
+    const score_less_sound = new Audio("sounds/apert2.wav");
+    let health;
+    let health_less_time;
+    const health_less_sound = new Audio("sounds/strom.wav");
+    let health_diff;
+
+    let ship_width = 140;
+    let ship_height = 140;
+    const ship_speed = 4;
+    const ship = {
+      x: 0,
+      y: 0,
+      direction: 'up',
+      level: 1,
+    };
+
+    const laser_sound = new Audio("sounds/laser.wav");
+    const laser_img = loadImage("pocisk.png");
+    let laser_width = 10;
+    let laser_height = 50;
+    const laser_speed = 2;
+    let lasers = [];
+
+    let monster_width = 250 / 2;
+    let monster_height = 200 / 2;
+    let monster_speed = 0.3;
+    let monsters = [];
+
+    function loadImage(src) {
+      const img = new Image();
+      img.src = "img/" + src;
+      return img;
+    }
+
+    function recalRange() {
+      for (const monster of monsters) {
+        monster.y += monster_speed;
+        if (monster.y > board.height) {
+          monsters.splice(monsters.indexOf(monster), 1);
+          score_diff -= monster.rodzaj;
+        }
+      }
+
+      for (const laser of lasers) {
+        laser.y -= laser_speed;
+        if (laser.y < -laser_height) {
+          lasers.splice(lasers.indexOf(laser), 1);
+        }
+      }
+    }
+
+    function recalCollisions() {
+      for (const laser of lasers) {
+        for (const monster of monsters) {
+          if (monster.x <= laser.x && laser.x <= monster.x + monster_width
+            && monster.y <= laser.y && laser.y <= monster.y + monster_height / 2) {
+            monsters.splice(monsters.indexOf(monster), 1);
+            lasers.splice(lasers.indexOf(laser), 1);
+            score_diff += monster.rodzaj;
+            break;
+          }
+        }
+      }
+
+      health_diff = 0;
+      for (const monster of monsters) {
+        if ((monster.x <= ship.x && ship.x <= monster.x + monster_width
+          || ship.x <= monster.x && monster.x <= ship.x + ship_width)
+          && monster.y <= ship.y && ship.y <= monster.y + monster_height) {
+          monsters.splice(monsters.indexOf(monster), 1);
+          health_diff--;
+        }
+      }
+    }
+
+    function recalScore() {
+      if (score_diff > 0) {
+        const next_level = levels[ship.level].next_level;
+        if (score < next_level && score + score_diff >= next_level) {
+          ship.level++;
+          monster_speed = levels[ship.level].monster_speed;
+          level_up_time = Date.now();
+          level_up_sound.play();
+          ship_width = getShipImg().width;
+          ship_height = getShipImg().height;
+        }
+      }
+      if (score_diff < 0) {
+        score_less_sound.play();
+      }
+
+      if (score + score_diff >= 0) {
+        score += score_diff;
+      } else {
+        gameOver();
+      }
+    }
+
+    function recalHealth() {
+      if (health_diff < 0) {
+        health_less_time = Date.now();
+        health_less_sound.play();
+      }
+
+      health += health_diff;
+      if (health == 0) {
+        gameOver();
+      }
+    }
+
+    function recalMonsters() {
+      if (monsters.length < Math.floor(ship.level / 2) + 2) {
+        monsters.push({
+          x: getRandomInt(board.width - monster_width - 100) + 50,
+          y: -monster_height,
+          rodzaj: getRandomInt(3) + 1,
+        });
+      }
+    }
+
+    function recalShip() {
+      if (ship.direction == 'left') {
+        ship.x -= ship_speed;
+        if (ship.x < 0) {
+          ship.x = 0;
+        }
+
+      }
+      if (ship.direction == 'right') {
+        ship.x += ship_speed;
+        if (ship.x + ship_width > board.width) {
+          ship.x = board.width - ship_width;
+        }
+      }
+    }
+
+    function recalculate() {
+      score_diff = 0;
+      recalRange();
+      recalCollisions();
+      recalScore();
+      recalHealth();
+      recalMonsters();
+      recalShip();
+    }
+
+    function drawCenter(image) {
+      const x = (board.width - image.width) / 2;
+      const y = (board.height - image.height) / 2;
+      canvas.drawImage(image, x, y);
+    }
+
+    function getShipImg() {
+      return ship_img[ship.level][ship.direction];
+    }
+
+    function draw() {
+      for (const laser of lasers) {
+        canvas.drawImage(laser_img, laser.x, laser.y);
+      }
+
+      const health_acrion = Date.now() - health_less_time;
+      if (health_acrion <= 2000 && (Math.floor(health_acrion / 200)) % 2 == 0) {
+        // skip
+      } else {
+        canvas.drawImage(getShipImg(), ship.x, ship.y);
+      }
+
+      for (const monster of monsters) {
+        const p_i = monster_img[monster.rodzaj][(Math.floor(Date.now() / 400) + monster.rodzaj) % 4];
+        canvas.drawImage(p_i, monster.x, monster.y);
+      }
+
+      if (Date.now() - level_up_time <= 2000) {
+        drawCenter(level_up_img);
+      }
+    }
+
+    function setPressedKey(event) {
+      if (event.key == "ArrowLeft") {
+        ship.direction = 'left';
+      }
+      if (event.key == "ArrowRight") {
+        ship.direction = 'right';
+      }
+      if (event.key == " ") {
+        lasers.push({
+          x: ship.x + ship_width / 2 - laser_width / 2,
+          y: ship.y - laser_height / 2
+        });
+        laser_sound.play();
+      }
+    }
+
+    function setUpKey(event) {
+      if (event.key == "ArrowLeft") {
+        ship.direction = 'up';
+      }
+      if (event.key == "ArrowRight") {
+        ship.direction = 'up';
+      }
+    }
+
+    function animation() {
+      canvas.clearRect(0, 0, board.width, board.height);
+      recalculate();
+      draw();
+      document.getElementById("score").textContent = "Score: " + score;
+      document.getElementById("health").textContent = "Health: " + health;
+      document.getElementById("level").textContent = "Level: " + ship.level;
+    }
+
+    function getRandomInt(max) {
+      return Math.floor(Math.random() * max);
+    }
+
+    let background_pos = 0;
+    const background_interval = setInterval(() => {
+      background_pos += monster_speed;
+      board.style.backgroundPositionY = `${background_pos}px`;
+    }, 30);
+
+    let animation_interval;
+
+    function startGame() {
+      score = 0;
+      health = 3;
+
+      monster_speed = 0.3
+      monsters = [];
+      lasers = [];
+
+      ship.level = 1;
+      ship_width = getShipImg().width;
+      ship_height = getShipImg().height;
+      ship.x = board.width / 2 - ship_width / 2;
+      ship.y = board.height - ship_height - 10;
+
+      const start_sound = new Audio("sounds/space.wav");
+      start_sound.play();
+
+      animation_interval = setInterval(animation, 10);
+
+      document.getElementById("start_game").style.display = "none";
+
+      document.addEventListener("keydown", setPressedKey, false);
+      document.addEventListener("keyup", setUpKey, false);
+    }
+
+    function gameOver() {
+      clearInterval(animation_interval);
+      clearInterval(background_interval);
+      document.removeEventListener("keydown", setPressedKey);
+      document.removeEventListener("keyup", setUpKey);
+
+      const overlay = loadImage("overlay.png");
+      overlay.onload = () => drawCenter(overlay);
+
+      const game_over = loadImage('game_over.png');
+      game_over.onload = () => drawCenter(game_over);
+
+      const game_over_sound = new Audio("sounds/falling.wav");
+      game_over_sound.play();
+
+      document.getElementById("start_game").style.display = "block";
+    }
+
+    function gameIntro() {
+      const overlay = loadImage("overlay.png");
+      overlay.onload = () => drawCenter(overlay);
+      const intro = loadImage("story.png");
+      intro.onload = () => drawCenter(intro);
+    }
+
+    gameIntro();
+
+  </script>
+
+</body>
+</html>
