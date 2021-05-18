@@ -156,8 +156,8 @@
     const laser_speed = 2;
     let lasers = [];
 
-    let monster_width = 250 / 2;
-    let monster_height = 200 / 2;
+    let monster_width = 127;
+    let monster_height = 100;
     let monster_speed = 0.3;
     let monsters = [];
 
@@ -351,7 +351,7 @@
 
     let background_pos = 0;
     const background_interval = setInterval(() => {
-      background_pos += monster_speed;
+      background_pos += monster_speed * 2;
       board.style.backgroundPositionY = `${background_pos}px`;
     }, 30);
 
