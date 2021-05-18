@@ -1,4 +1,3 @@
-
 <html lang="en">
 
 <head>
@@ -32,9 +31,9 @@
       margin: 0;
     }
 
-    .panel {
+    #panel {
       border: 4px solid darkseagreen;
-      display: flex;
+      display: none;
       justify-content: center;
       border-radius: 10px;
       padding: 10px;
@@ -67,6 +66,7 @@
       padding-left: 50px;
       padding-right: 50px;
     }
+
     footer {
       color: rgb(196, 250, 214);
       text-align: center;
@@ -83,7 +83,7 @@
     <canvas id="board" width="1000px" height="700px"></canvas>
     <button id="start_game" onclick="startGame()">S T A R T</button>
   </div>
-  <div class="panel">
+  <div id="panel">
     <span id="level" class="value"></span>
     <span id="score" class="value"></span>
     <span id="health" class="value"></span>
@@ -95,7 +95,7 @@
     const levels = {};
     for (let i = 1; i < level_max; i++) {
       levels[i] = {
-        next_level: 10 * i,
+        next_level: 10 * i * i,
         monster_speed: 0.3 * i,
       };
     }
@@ -224,9 +224,8 @@
         score_less_sound.play();
       }
 
-      if (score + score_diff >= 0) {
-        score += score_diff;
-      } else {
+      score += score_diff;
+      if (score < 0) {
         gameOver();
       }
     }
@@ -366,6 +365,7 @@
       lasers = [];
 
       ship.level = 1;
+      ship.direction = 'up';
       ship_width = getShipImg().width;
       ship_height = getShipImg().height;
       ship.x = board.width / 2 - ship_width / 2;
@@ -377,7 +377,7 @@
       animation_interval = setInterval(animation, 10);
 
       document.getElementById("start_game").style.display = "none";
-
+      document.getElementById("panel").style.display = "flex";
       document.addEventListener("keydown", setPressedKey, false);
       document.addEventListener("keyup", setUpKey, false);
     }
@@ -402,9 +402,12 @@
 
     function gameIntro() {
       const overlay = loadImage("overlay.png");
-      overlay.onload = () => drawCenter(overlay);
-      const intro = loadImage("story.png");
-      intro.onload = () => drawCenter(intro);
+      overlay.onload = () => {
+        drawCenter(overlay);
+        const intro = loadImage("story.png");
+        intro.onload = () => drawCenter(intro);
+      };
+
     }
 
     gameIntro();
@@ -412,4 +415,5 @@
   </script>
 
 </body>
+
 </html>
