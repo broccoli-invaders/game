@@ -12,7 +12,7 @@
     }
 
     #board {
-      background-image: url("img/space2.png");
+      background-image: url("img/space5.png");
       background-size: cover;
       background-color: rgb(0, 0, 0);
       background-position-y: 0;
@@ -160,6 +160,10 @@
     let monster_height = 100;
     let monster_speed = 0.3;
     let monsters = [];
+
+    const gem_red_1_img = loadImage("gem_red_1.png");
+    const gem_red_2_img = loadImage("gem_red_2.png");
+    const gem_sound = new Audio("sounds/apert.wav");
 
     function loadImage(src) {
       const img = new Image();
@@ -349,13 +353,16 @@
       return Math.floor(Math.random() * max);
     }
 
-    let background_pos = 0;
-    const background_interval = setInterval(() => {
+    function backgroundAnimation() {
       background_pos += monster_speed * 2;
       board.style.backgroundPositionY = `${background_pos}px`;
-    }, 30);
+    }
 
     let animation_interval;
+
+    let background_pos = 0;
+    let background_interval;
+
 
     function startGame() {
       score = 0;
@@ -375,7 +382,9 @@
       const start_sound = new Audio("sounds/space.wav");
       start_sound.play();
 
+      background_pos = 0;
       animation_interval = setInterval(animation, 10);
+      background_interval = setInterval(backgroundAnimation, 30);
 
       document.getElementById("start_game").style.display = "none";
       document.getElementById("panel").style.display = "flex";
