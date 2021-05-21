@@ -232,9 +232,10 @@
     }
 
     function detectShipCollisions(object, width, height) {
-       return (object.x <= ship.x && ship.x <= object.x + width
-          || ship.x <= object.x && object.x <= ship.x + ship_width)
-          && object.y <= ship.y && ship.y <= object.y + height;
+       return object.x < ship.x + ship_width &&
+       object.x + width > ship.x &&
+       object.y < ship.y + ship_height &&
+       object.y + height > ship.y;
     }
 
     function recalScore() {
