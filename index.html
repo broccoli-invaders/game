@@ -91,7 +91,7 @@
   <footer>Created by Daria from OKI</footer>
 
   <script type="text/javascript">
-    const level_max = 12;
+    const level_max = 9;
     const levels = {};
     const monster_speed_step = 0.4;
     for (let i = 1; i < level_max; i++) {
@@ -162,9 +162,15 @@
     let monster_speed;
     let monsters = [];
 
-    const gem_red_1_img = loadImage("gem_red_1.png");
-    const gem_red_2_img = loadImage("gem_red_2.png");
+    const gem_img = {
+      health: [loadImage("gem_red_1.png"), loadImage("gem_red_2.png"),],
+      bomb: [loadImage("gem_green_1.png"), loadImage("gem_green_2.png"),],
+    };
     const gem_sound = new Audio("sounds/apert.wav");
+    const gem_width = 56;
+    const gem_height = 60;
+    const gem_speed = 0.5;
+    let gems = [];
 
     function loadImage(src) {
       const img = new Image();
@@ -187,6 +193,13 @@
           lasers.splice(lasers.indexOf(laser), 1);
         }
       }
+
+      for (const gem of gems) {
+        gem.y += gem_speed;
+        if (gem.y > board.height) {
+          gems.splice(gems.indexOf(gem), 1);
+        }
+      }
     }
 
     function recalCollisions() {
@@ -204,13 +217,24 @@
 
       health_diff = 0;
       for (const monster of monsters) {
-        if ((monster.x <= ship.x && ship.x <= monster.x + monster_width
-          || ship.x <= monster.x && monster.x <= ship.x + ship_width)
-          && monster.y <= ship.y && ship.y <= monster.y + monster_height) {
+        if (detectShipCollisions(monster, monster_width, monster_height)) {
           monsters.splice(monsters.indexOf(monster), 1);
           health_diff--;
         }
       }
+
+      for (const gem of gems) {
+        if (detectShipCollisions(gem, gem_width, gem_height)) {
+            gems.splice(gems.indexOf(gem), 1);
+            health_diff++;
+        }
+      }
+    }
+
+    function detectShipCollisions(object, width, height) {
+       return (object.x <= ship.x && ship.x <= object.x + width
+          || ship.x <= object.x && object.x <= ship.x + ship_width)
+          && object.y <= ship.y && ship.y <= object.y + height;
     }
 
     function recalScore() {
@@ -223,6 +247,11 @@
           level_up_sound.play();
           ship_width = getShipImg().width;
           ship_height = getShipImg().height;
+          gems.push({
+            x: getRandomInt(board.width - gem_width - 100) + 50,
+            y: -gem_height,
+            type: "health",
+          });
         }
       }
       if (score_diff < 0) {
@@ -299,6 +328,11 @@
         canvas.drawImage(laser_img, laser.x, laser.y);
       }
 
+      for (const gem of gems) {
+        const g_i = gem_img[gem.type][Math.floor(Date.now() / 200) % 2];
+        canvas.drawImage(g_i, gem.x, gem.y);
+      }
+
       const health_action = Date.now() - health_less_time;
       if (health_action <= 2000 && (Math.floor(health_action / 200)) % 2 == 0) {
         // skip
@@ -364,7 +398,6 @@
     let background_pos = 0;
     let background_interval;
 
-
     function startGame() {
       score = 0;
       health = 3;
@@ -372,6 +405,7 @@
       monster_speed = monster_speed_step;
       monsters = [];
       lasers = [];
+      gems = [];
 
       ship.level = 1;
       ship.direction = 'up';
