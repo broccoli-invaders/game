@@ -67,6 +67,13 @@
       padding-right: 50px;
     }
 
+    #health {
+      background-image: url('./img/gem_red_2.png');
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-position-x: right;
+    }
+
     footer {
       color: rgb(196, 250, 214);
       text-align: center;
@@ -88,7 +95,7 @@
     <span id="score" class="value"></span>
     <span id="health" class="value"></span>
   </div>
-  <footer>Created by Daria from OKI</footer>
+  <footer>Created by Daria from OKI<br />version 2021-05-23</footer>
 
   <script type="text/javascript">
     const level_max = 9;
@@ -230,6 +237,7 @@
         }
       }
     }
+  
 
     function detectShipCollisions(object, width, height) {
        return object.x < ship.x + ship_width &&
@@ -442,8 +450,6 @@
 
       const game_over_sound = new Audio("sounds/falling.wav");
       game_over_sound.play();
-
-      document.getElementById("start_game").style.display = "block";
     }
 
     function gameIntro() {
