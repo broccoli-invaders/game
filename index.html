@@ -63,15 +63,19 @@
       color: rgb(196, 250, 214);
       font-size: x-large;
       font-weight: bold;
-      padding-left: 50px;
-      padding-right: 50px;
+      padding-left: 40px;
+      padding-right: 40px;
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-position: right 10px top 0;
     }
 
     #health {
       background-image: url('./img/gem_red_2.png');
-      background-repeat: no-repeat;
-      background-size: contain;
-      background-position-x: right;
+    }
+
+    #bomb {
+      background-image: url('./img/gem_green_2.png');
     }
 
     footer {
@@ -91,6 +95,7 @@
     <button id="start_game" onclick="startGame()">S T A R T</button>
   </div>
   <div id="panel">
+    <span id="bomb" class="value"></span>
     <span id="level" class="value"></span>
     <span id="score" class="value"></span>
     <span id="health" class="value"></span>
@@ -146,6 +151,10 @@
     let health_less_time;
     const health_less_sound = new Audio("sounds/strom.wav");
     let health_diff;
+    let bombs = 0;
+    const bomb_sound = new Audio('sounds/explos.wav');
+    let bomb_time;
+    const bomb_overlay_img = loadImage("overlay_green_1.png");
 
     let ship_width = 140;
     let ship_height = 140;
@@ -232,18 +241,22 @@
 
       for (const gem of gems) {
         if (detectShipCollisions(gem, gem_width, gem_height)) {
-            gems.splice(gems.indexOf(gem), 1);
+          gems.splice(gems.indexOf(gem), 1);
+          if (gem.type == 'health') {
             health_diff++;
+          } else if (gem.type == 'bomb') {
+            bombs++;
+          }
         }
       }
     }
-  
+
 
     function detectShipCollisions(object, width, height) {
-       return object.x < ship.x + ship_width &&
-       object.x + width > ship.x &&
-       object.y < ship.y + ship_height &&
-       object.y + height > ship.y;
+      return object.x < ship.x + ship_width &&
+        object.x + width > ship.x &&
+        object.y < ship.y + ship_height &&
+        object.y + height > ship.y;
     }
 
     function recalScore() {
@@ -256,11 +269,20 @@
           level_up_sound.play();
           ship_width = getShipImg().width;
           ship_height = getShipImg().height;
-          gems.push({
-            x: getRandomInt(board.width - gem_width - 100) + 50,
-            y: -gem_height,
-            type: "health",
-          });
+          if (ship.level % 2 == 0) {
+            gems.push({
+              x: getRandomInt(board.width - gem_width - 100) + 50,
+              y: -gem_height,
+              type: "bomb",
+            });
+          } else {
+            gems.push({
+              x: getRandomInt(board.width - gem_width - 100) + 50,
+              y: -gem_height,
+              type: "health",
+            });
+          }
+
         }
       }
       if (score_diff < 0) {
@@ -354,12 +376,16 @@
         canvas.drawImage(p_i, monster.x, monster.y);
       }
 
+      if (Date.now() - bomb_time <= 500) {
+        drawCenter(bomb_overlay_img);
+      }
+      
       if (Date.now() - level_up_time <= 2000) {
         drawCenter(level_up_img);
       }
     }
 
-    function setPressedKey(event) {
+    function onKeyDown(event) {
       if (event.key == "ArrowLeft") {
         ship.direction = 'left';
       }
@@ -373,9 +399,15 @@
         });
         laser_sound.play();
       }
+      if (event.key == 'b' && bombs > 0) {
+        bombs--;
+        monsters = [];
+        bomb_time = Date.now();
+        bomb_sound.play();
+      }
     }
 
-    function setUpKey(event) {
+    function onKeyUp(event) {
       if (event.key == "ArrowLeft") {
         ship.direction = 'up';
       }
@@ -388,6 +420,7 @@
       canvas.clearRect(0, 0, board.width, board.height);
       recalculate();
       draw();
+      document.getElementById("bomb").textContent = "[B]ombs: " + bombs;
       document.getElementById("score").textContent = "Score: " + score;
       document.getElementById("health").textContent = "Health: " + health;
       document.getElementById("level").textContent = "Level: " + ship.level;
@@ -432,15 +465,15 @@
 
       document.getElementById("start_game").style.display = "none";
       document.getElementById("panel").style.display = "flex";
-      document.addEventListener("keydown", setPressedKey, false);
-      document.addEventListener("keyup", setUpKey, false);
+      document.addEventListener("keydown", onKeyDown, false);
+      document.addEventListener("keyup", onKeyUp, false);
     }
 
     function gameOver() {
       clearInterval(animation_interval);
       clearInterval(background_interval);
-      document.removeEventListener("keydown", setPressedKey);
-      document.removeEventListener("keyup", setUpKey);
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("keyup", onKeyUp);
 
       const overlay = loadImage("overlay.png");
       overlay.onload = () => drawCenter(overlay);
