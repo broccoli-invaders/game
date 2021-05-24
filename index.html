@@ -103,20 +103,22 @@
   <footer>Created by Daria from OKI<br />version 2021-05-24</footer>
 
   <script type="text/javascript">
-    const level_max = 9;
+    const level_max = 15;
     const levels = {};
-    const monster_speed_step = 0.4;
+    const monster_speed_step = 0.3;
     for (let i = 1; i < level_max; i++) {
       levels[i] = {
         next_level: 10 * i * i,
         monster_speed: monster_speed_step * i,
-        laser_cooldown: 260 - 10 * i,
+        laser_cooldown: 200 - 10 * i,
+        ship_speed: 5 + Math.floor(i/2),
       };
     }
     levels[level_max] = {
       next_level: 100000,
       monster_speed: monster_speed_step * level_max,
       laser_cooldown: 10,
+      ship_speed: level_max + 10,
     };
     const level_up_sound = new Audio("sounds/curve.wav");
     const level_up_img = loadImage("level_up.png");
@@ -125,7 +127,7 @@
     const ship_version_max = 3;
     const ship_img = {};
     for (let i = 0; i < level_max; i++) {
-      const version = Math.floor(i / ship_version_max) + 1;
+      const version = Math.floor(i / (level_max / ship_version_max)) + 1;
       ship_img[i + 1] = {
         up: loadImage(`statek_v${version}.png`),
         left: loadImage(`statek_v${version}_left.png`),
@@ -160,7 +162,6 @@
 
     let ship_width = 140;
     let ship_height = 140;
-    const ship_speed = 4;
     const ship = {
       x: 0,
       y: 0,
@@ -173,7 +174,6 @@
     let laser_width = 10;
     let laser_height = 50;
     let laser_ready = false;
-    let laser_cooldown = 250;
     const laser_speed = 2;
     let lasers = [];
 
@@ -273,7 +273,6 @@
           level_up_sound.play();
           ship_width = getShipImg().width;
           ship_height = getShipImg().height;
-          laser_cooldown = levels[ship.level].laser_cooldown;
 
           if (ship.level % 2 == 0) {
             gems.push({
@@ -326,14 +325,14 @@
 
     function recalShip() {
       if (ship.direction == 'left') {
-        ship.x -= ship_speed;
+        ship.x -= levels[ship.level].ship_speed;
         if (ship.x < 0) {
           ship.x = 0;
         }
 
       }
       if (ship.direction == 'right') {
-        ship.x += ship_speed;
+        ship.x += levels[ship.level].ship_speed;
         if (ship.x + ship_width > board.width) {
           ship.x = board.width - ship_width;
         }
@@ -404,7 +403,7 @@
           x: ship.x + ship_width / 2 - laser_width / 2,
           y: ship.y - laser_height / 2
         });
-        setTimeout(() => { laser_ready = false; }, laser_cooldown);
+        setTimeout(() => { laser_ready = false; }, levels[ship.level].laser_cooldown);
         laser_sound.play();
       }
       if (event.key == 'b' && bombs > 0) {
