@@ -110,11 +110,13 @@
       levels[i] = {
         next_level: 10 * i * i,
         monster_speed: monster_speed_step * i,
+        laser_cooldown: 260 - 10 * i,
       };
     }
     levels[level_max] = {
       next_level: 100000,
       monster_speed: monster_speed_step * level_max,
+      laser_cooldown: 10,
     };
     const level_up_sound = new Audio("sounds/curve.wav");
     const level_up_img = loadImage("level_up.png");
@@ -167,11 +169,11 @@
     };
 
     const laser_sound = new Audio("sounds/laser.wav");
-    const laser_img = loadImage("pocisk.png");
+    const laser_img = loadImage("laser.png");
     let laser_width = 10;
     let laser_height = 50;
-    let laserDelay=0;
-    let laserGaps=400;
+    let laser_ready = false;
+    let laser_cooldown = 250;
     const laser_speed = 2;
     let lasers = [];
 
@@ -271,13 +273,15 @@
           level_up_sound.play();
           ship_width = getShipImg().width;
           ship_height = getShipImg().height;
+          laser_cooldown = levels[ship.level].laser_cooldown;
+
           if (ship.level % 2 == 0) {
             gems.push({
               x: getRandomInt(board.width - gem_width - 100) + 50,
               y: -gem_height,
               type: "bomb",
             });
-          } else {
+          } else if (ship.level % 2 == 1){
             gems.push({
               x: getRandomInt(board.width - gem_width - 100) + 50,
               y: -gem_height,
@@ -394,13 +398,13 @@
       if (event.key == "ArrowRight") {
         ship.direction = 'right';
       }
-      if (event.key == " " && laserDelay == 0) {
-        laserDelay = 1;
+      if (event.key == " " && laser_ready == false) {
+        laser_ready = true;
         lasers.push({
           x: ship.x + ship_width / 2 - laser_width / 2,
           y: ship.y - laser_height / 2
         });
-        setTimeout(() => { laserDelay = 0; }, laserGaps);
+        setTimeout(() => { laser_ready = false; }, laser_cooldown);
         laser_sound.play();
       }
       if (event.key == 'b' && bombs > 0) {
