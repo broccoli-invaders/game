@@ -143,7 +143,7 @@
 
     const board = document.getElementById("board");
     const canvas = board.getContext("2d");
-
+    
     let score;
     let score_diff;
     const score_less_sound = new Audio("sounds/apert2.wav");
@@ -170,6 +170,8 @@
     const laser_img = loadImage("pocisk.png");
     let laser_width = 10;
     let laser_height = 50;
+    let laserDelay=0;
+    let laserGaps=400;
     const laser_speed = 2;
     let lasers = [];
 
@@ -392,11 +394,13 @@
       if (event.key == "ArrowRight") {
         ship.direction = 'right';
       }
-      if (event.key == " ") {
+      if (event.key == " " && laserDelay == 0) {
+        laserDelay = 1;
         lasers.push({
           x: ship.x + ship_width / 2 - laser_width / 2,
           y: ship.y - laser_height / 2
         });
+        setTimeout(() => { laserDelay = 0; }, laserGaps);
         laser_sound.play();
       }
       if (event.key == 'b' && bombs > 0) {
