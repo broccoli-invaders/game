@@ -106,12 +106,14 @@
     const level_max = 15;
     const levels = {};
     const monster_speed_step = 0.3;
+    const laser_speed_step = 0.2;
     for (let i = 1; i < level_max; i++) {
       levels[i] = {
         next_level: 10 * i * i,
         monster_speed: monster_speed_step * i,
         laser_cooldown: 200 - 10 * i,
         ship_speed: 5 + Math.floor(i / 2),
+        laser_speed: 2 + laser_speed_step * i,
       };
     }
     levels[level_max] = {
@@ -119,6 +121,7 @@
       monster_speed: monster_speed_step * level_max,
       laser_cooldown: 10,
       ship_speed: level_max + 10,
+      laser_speed: 2 + laser_speed_step * level_max,
     };
     const level_up_sound = new Audio("sounds/curve.wav");
     const level_up_img = loadImage("level_up.png");
@@ -175,7 +178,6 @@
     let laser_height = 50;
     let laser_ready = true;
     let laser_on = false;
-    const laser_speed = 2;
     let lasers = [];
 
     let monster_width = 127;
@@ -209,7 +211,7 @@
       }
 
       for (const laser of lasers) {
-        laser.y -= laser_speed;
+        laser.y -= levels[ship.level].laser_speed;
         if (laser.y < -laser_height) {
           lasers.splice(lasers.indexOf(laser), 1);
         }
