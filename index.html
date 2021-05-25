@@ -300,6 +300,9 @@
         score = 0;
         gameOver();
       }
+      if (score >= 9999) {
+        youWon();
+      }
     }
 
     function recalHealth() {
@@ -502,6 +505,22 @@
 
       const game_over_sound = new Audio("sounds/falling.wav");
       game_over_sound.play();
+    }
+
+    function youWon() {
+      clearInterval(animation_interval);
+      clearInterval(background_interval);
+      document.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("keyup", onKeyUp);
+
+      const overlay = loadImage("overlay_green_1.png");
+      overlay.onload = () => drawCenter(overlay);
+
+      const you_won = loadImage('you_won.png');
+      you_won.onload = () => drawCenter(you_won);
+
+      const you_won_sound = new Audio("sounds/applause.wav");
+      you_won_sound.play();
     }
 
     function gameIntro() {
