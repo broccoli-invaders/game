@@ -106,13 +106,14 @@
     const level_max = 15;
     const levels = {};
     const monster_speed_step = 0.3;
-    const laser_speed_step = 0.2;
+    const laser_speed_step = 0.1;
+    const ship_speed_step = 0.2;
     for (let i = 1; i < level_max; i++) {
       levels[i] = {
         next_level: 10 * i * i,
         monster_speed: monster_speed_step * i,
         laser_cooldown: 200 - 10 * i,
-        ship_speed: 5 + Math.floor(i / 2),
+        ship_speed: 5 + ship_speed_step * i,
         laser_speed: 2 + laser_speed_step * i,
       };
     }
